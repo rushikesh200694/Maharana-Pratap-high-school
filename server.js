@@ -21,16 +21,19 @@ app.use('/api/contact', contactRoutes);
 // Health check for API
 app.get('/api/health', (req, res) => res.json({ message: 'Maharana Pratap School API is running!' }));
 
-// Serve frontend in production
+// Serve frontend unconditionally
 const path = require('path');
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'frontend/dist')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'frontend', 'dist', 'index.html'));
-  });
-} else {
-  app.get('/', (req, res) => res.json({ message: 'API is running' }));
-}
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
+
+// Ensure API requests don't hit the catch-all if not found, but return 404
+app.get('/api/*', (req, res) => {
+  res.status(404).json({ message: 'API route not found' });
+});
+
+// All other GET requests not handled before will return the React app
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'frontend', 'dist', 'index.html'));
+});
 
 // Global Error Handler
 app.use((err, req, res, next) => {
